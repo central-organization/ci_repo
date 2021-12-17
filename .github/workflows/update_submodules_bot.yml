@@ -1,0 +1,43 @@
+name: Update submodules
+on: 
+  
+  workflow_call:
+      secrets: 
+        token: 
+          required: true
+  
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Secret
+        run: echo ${{ secrets.token }}
+      - uses: actions/checkout@v2
+        with:
+          repository: central-organization/master_repo
+          ref: master
+          token: ${{ secrets.token }}
+      - name: Update each submodule's head
+        run: |
+          git submodule update --init --remote --recursive
+          git status
+          git add .
+      - name: Commit report
+        run: |
+          git config --global user.name 'Bot'
+          git commit -m "Update submodules"
+          git push
+      
+      
+      # - name: Push changes
+      #   run: |
+      #     git add .
+      #     git config --global user.name 'Bot'
+          
+      #     git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/central-organization/master_repo
+      #     git commit -m "Update heads of submodules"
+      #     git push
+          
