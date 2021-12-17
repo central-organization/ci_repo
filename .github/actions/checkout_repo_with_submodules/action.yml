@@ -3,7 +3,11 @@ description: 'Action for checkout of repository which contains submodules'
 inputs:
   repo:
     required: true
+<<<<<<< HEAD
   token:
+=======
+  token:  
+>>>>>>> Commit test
     required: true
   ref:
     default: master
@@ -13,9 +17,16 @@ runs:
   steps:
     - uses: actions/checkout@v2
       with:
+<<<<<<< HEAD
         fetch-depth: ${{ inputs.fetch-depth }}
+=======
+>>>>>>> Commit test
         repository: ${{ inputs.repo }}
         ref: ${{ inputs.ref }}
         token: ${{ inputs.token }}
     - run: git submodule update --init --remote --recursive
       shell: bash
+<<<<<<< HEAD
+=======
+      
+>>>>>>> Commit test

@@ -1,0 +1,25 @@
+name: parse_diff
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 4
+
+      - name: Save diff and parse
+        run: |
+         git fetch
+         git diff origin/master > diff_master.txt
+         cat diff_master.txt
+        shell: bash
