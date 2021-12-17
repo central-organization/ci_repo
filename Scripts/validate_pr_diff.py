@@ -30,7 +30,7 @@ def execute_git_diff_command(git_repo_path, pr_base_sha, pr_head_sha):
     return git_diff_output
 
 def main(args):
-    git_diff_output = execute_git_diff_command(args.pr_base_sha, args.pr_head_sha)
+    git_diff_output = execute_git_diff_command(args.git_repo_path, args.pr_base_sha, args.pr_head_sha)
     print(git_diff_output)
 
     # TODO: parse git_diff_output and validate url
