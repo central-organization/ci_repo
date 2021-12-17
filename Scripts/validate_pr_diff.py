@@ -3,16 +3,17 @@ import subprocess
 
 
 DEFAULT_FILE_ENCODING = "utf-8"
-GIT_DIFF_COMMAND = "git diff {pr_base_sha} {pr_head_sha}"
+GIT_DIFF_COMMAND = ["/bin/bash", "-c", "git -C {git_repo_path} diff {pr_base_sha} {pr_head_sha}"]
 
 def parse_input_arguments():
     parser = argparse.ArgumentParser(description="Parse diff of integration PR")
+    parser.add_argument("--git_repo_path", help="", required=True)
     parser.add_argument("--pr_base_sha", help="", required=True)
     parser.add_argument("--pr_head_sha", help="", required=True)
     return parser.parse_args()
 
-def execute_git_diff_command(pr_base_sha, pr_head_sha):
-    cmd = GIT_DIFF_COMMAND.format(pr_base_sha=pr_base_sha, pr_head_sha=pr_head_sha)
+def execute_git_diff_command(git_repo_path, pr_base_sha, pr_head_sha):
+    cmd = GIT_DIFF_COMMAND.format(git_repo_path=git_repo_path, pr_base_sha=pr_base_sha, pr_head_sha=pr_head_sha)
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     if proc.returncode != 0:
