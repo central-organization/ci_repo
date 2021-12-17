@@ -13,7 +13,8 @@ def parse_input_arguments():
     return parser.parse_args()
 
 def execute_git_diff_command(git_repo_path, pr_base_sha, pr_head_sha):
-    cmd = GIT_DIFF_COMMAND.format(git_repo_path=git_repo_path, pr_base_sha=pr_base_sha, pr_head_sha=pr_head_sha)
+    cmd = GIT_DIFF_COMMAND
+    cmd[2] = cmd[2].format(git_repo_path=git_repo_path, pr_base_sha=pr_base_sha, pr_head_sha=pr_head_sha)
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     if proc.returncode != 0:
