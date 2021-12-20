@@ -1,7 +1,7 @@
 import argparse
 import logging
 import subprocess
-import json
+import sys
 
 from artifactory import ArtifactoryPath
 
@@ -10,7 +10,6 @@ from pathlib import Path
 
 import requests
 from xml_parser import XmlDict
-from requests_wrapper import requests_session
 
 
 DEFAULT_FILE_ENCODING = "utf-8"
@@ -24,6 +23,21 @@ def parse_input_arguments():
     parser.add_argument("--artifact_output_path", help="", required=True)
     return parser.parse_args()
 
+
+def get_provider_paths(repo_name):
+    repo_name = repo_name.split("/")[1]
+    tree = ElementTree.parse('unit_providers.xml')
+    root = tree.getroot()
+    for child in root:
+        for obj in child:
+            if obj.tag == 'GitHub_repository_name' and obj.text == repo_name:
+                xmldict = XmlDict(child)
+                break
+    output = {
+        'unofficial': xmldict['Unofficial_Artifactory_repository_path'],
+        'official': xmldict['Official_Artifactory_repository_path']
+    }
+    return output
 
 def execute_git_diff_command(git_repo_path):
     cmd = GIT_DIFF_COMMAND
@@ -53,35 +67,32 @@ def get_xml_config_from_diff(github_repo_path):
     return Path(github_repo_path) / xml_config
 
 
-def validate_downloaded_artifact(checksum, headers):
-    if checksum == headers["X-Checksum-Sha256"]:
+def get_contents_of(artifactory_url):
+    response = requests.get(artifactory_url, auth=('tu_central_org', 'Ide_gas123'))
+    return response
+
+def validate_downloaded_artifact(response, checksum):
+    if response.status_code == 200 and checksum == response.headers["X-Checksum-Sha256"]:
         return True
     return False
 
 
-def download_artifact(artifactory_url, output_path, checksum):
-    r = requests.get(artifactory_url, auth=('tu_central_org', 'Ide_gas123'))
-    status_code = r.status_code / 100
-    headers = r.headers
-
-    if validate_downloaded_artifact(checksum, headers):
+def save_artifact(response, output_path):
+    try:
         with open(output_path, "wb") as file:
-            file.write(r.content)
-    else:
-        logging.error(f"File from URL {artifactory_url} is not downloaded. Checksums are not the same.")
-
-    if status_code != 2:
-        logging.error(f"File {artifactory_url} does not exist")
-    return status_code
-
+            file.write(response.content)
+    except:
+        logging.error(f"File could not be saved to: {output_path}")
 
 def validate_pr_package(args):
     # artifactory_paths = get_artifactory_paths(args.github_repository)
-    artifactory_paths = {
-        "official": "https://centralorg.jfrog.io/artifactory/Official_provider_name/",
-        "unofficial": "https://centralorg.jfrog.io/artifactory/Unofficial_provider_name/",
-    }
+    # build_logs_tar_gz = "https://centralorg.jfrog.io/artifactory/Output_logs/build_logs_commit_timestamp.tar.gz"
+    # artifactory_paths = {
+    #     "official": "https://centralorg.jfrog.io/artifactory/Official_provider_name/",
+    #     "unofficial": "https://centralorg.jfrog.io/artifactory/Unofficial_provider_name/",
+    # }
 
+    artifactory_paths = get_provider_paths(args.github_repository)
     xml_config = get_xml_config_from_diff(args.github_repo_path)
     tree = ElementTree.parse(xml_config)
     root = tree.getroot()
@@ -101,12 +112,20 @@ def validate_pr_package(args):
     package_official_path_without_filename = Path(artifactory_paths["official"]) / artifactory_directory_path
     package_official_path = Path(artifactory_paths["official"]) / artifactory_directory_path / artifactory_file_name
 
-    unofficial_path_status_code = download_artifact("https://centralorg.jfrog.io/artifactory/Output_logs/build_logs_commit_timestamp.tar.gz", output_path, artifactory_checksum)
-    if unofficial_path_status_code != 2:
-        exit(1)
+    package_unofficial_path_response = get_contents_of(package_unofficial_path)
+    if validate_downloaded_artifact(package_unofficial_path_response, artifactory_checksum):
+        save_artifact(package_unofficial_path_response, output_path)
+    else:
+        logging.error("Checksum is not the same or status code is different than 200")
+        return 1
 
-    # xml_file = "C:\Users\mdominovic\Desktop\expltf\supplier\provider_name_repo\Units\Unit-A-versions.xml"
+    package_official_path_response = get_contents_of(package_official_path_without_filename)
+    if package_official_path_response.status_code != 200:
+        logging.error("Path not available on Artifactory")
+        return 1
+    return 0
 
 if __name__ == "__main__":
     configuration = parse_input_arguments()
-    validate_pr_package(configuration)
+    result = validate_pr_package(configuration)
+    sys.exit(result)
