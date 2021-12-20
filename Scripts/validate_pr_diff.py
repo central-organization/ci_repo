@@ -1,9 +1,11 @@
 import argparse
 import subprocess
+import re
 
 
 DEFAULT_FILE_ENCODING = "utf-8"
 GIT_DIFF_COMMAND = ["/bin/bash", "-c", "git -C {git_repo_path} diff {pr_base_sha} {pr_head_sha}"]
+PARSE_DIFF_RE = '\+\s*<Artifactory_archive>\n\+\s*<File_name>(.*)<\/File_name>\n\+\s*<Directory_path>(.*)<\/Directory_path>\n\+\s*<Checksum>(.*)<\/Checksum>'
 
 def parse_input_arguments():
     parser = argparse.ArgumentParser(description="Parse diff of integration PR")
@@ -34,6 +36,13 @@ def main(args):
     print(git_diff_output)
 
     # TODO: parse git_diff_output and validate url
+
+def parse_git_diff():
+    with open('diff_master.txt', 'r') as file:
+        data = file.read()
+    match = re.search(PARSE_DIFF_RE, data)
+    if match is not None:
+        print(match.group(1))
 
 if __name__ == "__main__":
     configuration = parse_input_arguments()
