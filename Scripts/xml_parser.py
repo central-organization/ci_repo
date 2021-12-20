@@ -35,3 +35,6 @@ class XmlDict(dict):
 # from xml.etree import cElementTree as ElementTree
 # tree = ElementTree.parse(<path_to_xml_file>)
 # root = tree.getroot()
+# for child in root:
+#     xmldict = XmlDict(child)
+#     versions.append(xmldict)
