@@ -107,7 +107,7 @@ def download_pr_package(package_unofficial_path, artifactory_checksum, arti_user
 def validate_official_artifactory_location(artifactory_path, arti_user, arti_password):
     package_official_path_response = get_contents_of(artifactory_path, arti_user, arti_password)
     if package_official_path_response.status_code != 200:
-        logging.error("Path {artifactory_path} not available on Artifactory")
+        logging.error(f"Path {artifactory_path} not available on Artifactory")
         return False
     return True
 
@@ -122,9 +122,9 @@ def validate_pr_package(args):
 
     output_path = Path(args.artifact_output_path) / package_file_name
 
-    package_unofficial_path = Path(artifactory_paths["unofficial"]) / package_directory_path / package_file_name
-    package_official_path_without_filename = Path(artifactory_paths["official"]) / package_directory_path
-    package_official_path = Path(artifactory_paths["official"]) / package_directory_path / package_file_name
+    package_unofficial_path = artifactory_paths["unofficial"] + package_directory_path + r"/" + package_file_name
+    package_official_path_without_filename = artifactory_paths["official"] + package_directory_path
+    package_official_path = package_official_path_without_filename + r"/" + package_file_name
 
     if download_pr_package(package_unofficial_path, package_checksum, args.artifactory_user, args.artifactory_pass, output_path) == False:
         return 1
@@ -132,9 +132,16 @@ def validate_pr_package(args):
     if validate_official_artifactory_location(package_official_path_without_filename, args.artifactory_user, args.artifactory_pass) == False:
         return package_official_path
         # check how to return package_official_path and supply it to other jobs
+    logging.info(f"Validated and downloaded: {package_unofficial_path} to location {output_path}")
+    logging.info(f"Validated existance of directory: {package_official_path_without_filename}")
     return 0
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=getattr(logging, "INFO", None),
+        format="%(asctime)s.%(msecs)03d %(levelname)s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
     configuration = parse_input_arguments()
     result = validate_pr_package(configuration)
     sys.exit(result)
