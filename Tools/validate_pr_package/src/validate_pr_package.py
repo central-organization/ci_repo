@@ -1,14 +1,12 @@
 import argparse
 import logging
+import requests
 import subprocess
 import sys
 
-from artifactory import ArtifactoryPath
-
-from xml.etree import cElementTree as ElementTree
 from pathlib import Path
+from xml.etree import cElementTree as ElementTree
 
-import requests
 from xml_parser import XmlDict
 
 
@@ -17,12 +15,12 @@ GIT_DIFF_COMMAND = ["/bin/bash", "-c", "git -C {git_repo_path} diff --name-only 
 
 
 def parse_input_arguments():
-    parser = argparse.ArgumentParser(description="Parse diff of integration PR")
+    parser = argparse.ArgumentParser(description="Parse diff of integration PR, validate and download files")
     parser.add_argument("--github_repo_path", help="", required=True)
     parser.add_argument("--master_repo_path", help="", required=True)
     parser.add_argument("--artifact_output_path", help="", required=True)
-    parser.add_argument("--arty_user", help="", required=True)
-    parser.add_argument("--arty_pass", help="", required=True)
+    parser.add_argument("--artifactory_user", help="", required=True)
+    parser.add_argument("--artifactory_pass", help="", required=True)
     return parser.parse_args()
 
 
@@ -62,9 +60,9 @@ def execute_git_diff_command(git_repo_path):
 def get_xml_config_from_diff(github_repo_path):
     git_diff_output = execute_git_diff_command(github_repo_path)
     git_diff_output = git_diff_output.split("\n")
-    for i in git_diff_output:
-        if i.endswith(".xml"):
-            xml_config = i
+    for file_name in git_diff_output:
+        if file_name.endswith(".xml"):
+            xml_config = file_name
 
     return Path(github_repo_path) / xml_config
 
@@ -86,38 +84,54 @@ def save_artifact(response, output_path):
     except:
         logging.error(f"File could not be saved to: {output_path}")
 
-def validate_pr_package(args):
-    artifactory_paths = get_provider_paths(args.github_repo_path, args.master_repo_path)
-    xml_config = get_xml_config_from_diff(args.github_repo_path)
+
+def get_latest_provider_configuration(xml_config):
     tree = ElementTree.parse(xml_config)
     root = tree.getroot()
     versions = []
     for child in root:
         xmldict = XmlDict(child)
         versions.append(xmldict)
+    return versions[0]
 
-    latest_version = versions[0]
-    artifactory_file_name = latest_version.get("Artifactory_archive", {}).get("File_name")
-    artifactory_directory_path = latest_version.get("Artifactory_archive", {}).get("Directory_path")
-    artifactory_checksum = latest_version.get("Artifactory_archive", {}).get("Checksum")
 
-    output_path = Path(args.artifact_output_path) / artifactory_file_name
-
-    package_unofficial_path = Path(artifactory_paths["unofficial"]) / artifactory_directory_path / artifactory_file_name
-    package_official_path_without_filename = Path(artifactory_paths["official"]) / artifactory_directory_path
-    package_official_path = Path(artifactory_paths["official"]) / artifactory_directory_path / artifactory_file_name
-
-    package_unofficial_path_response = get_contents_of(package_unofficial_path, args.arty_user, args.arty_pass)
+def download_pr_package(package_unofficial_path, artifactory_checksum, arti_user, arti_password, output_path):
+    package_unofficial_path_response = get_contents_of(package_unofficial_path, arti_user, arti_password)
     if validate_downloaded_artifact(package_unofficial_path_response, artifactory_checksum):
         save_artifact(package_unofficial_path_response, output_path)
     else:
         logging.error("Checksum is not the same or status code is different than 200")
+        return False
+
+
+def validate_official_artifactory_location(artifactory_path, arti_user, arti_password):
+    package_official_path_response = get_contents_of(artifactory_path, arti_user, arti_password)
+    if package_official_path_response.status_code != 200:
+        logging.error("Path {artifactory_path} not available on Artifactory")
+        return False
+    return True
+
+
+def validate_pr_package(args):
+    artifactory_paths = get_provider_paths(args.github_repo_path, args.master_repo_path)
+    xml_config = get_xml_config_from_diff(args.github_repo_path)
+    latest_provider_configuration = get_latest_provider_configuration(xml_config)
+    package_file_name = latest_provider_configuration.get("Artifactory_archive", {}).get("File_name")
+    package_directory_path = latest_provider_configuration.get("Artifactory_archive", {}).get("Directory_path")
+    package_checksum = latest_provider_configuration.get("Artifactory_archive", {}).get("Checksum")
+
+    output_path = Path(args.artifact_output_path) / package_file_name
+
+    package_unofficial_path = Path(artifactory_paths["unofficial"]) / package_directory_path / package_file_name
+    package_official_path_without_filename = Path(artifactory_paths["official"]) / package_directory_path
+    package_official_path = Path(artifactory_paths["official"]) / package_directory_path / package_file_name
+
+    if download_pr_package(package_unofficial_path, package_checksum, args.artifactory_user, args.artifactory_pass, output_path) == False:
         return 1
 
-    package_official_path_response = get_contents_of(package_official_path_without_filename)
-    if package_official_path_response.status_code != 200:
-        logging.error("Path not available on Artifactory")
-        return 1
+    if validate_official_artifactory_location(package_official_path_without_filename, args.artifactory_user, args.artifactory_pass) == False:
+        return package_official_path
+        # check how to return package_official_path and supply it to other jobs
     return 0
 
 if __name__ == "__main__":

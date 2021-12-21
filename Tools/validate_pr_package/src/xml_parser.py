@@ -29,12 +29,3 @@ class XmlDict(dict):
                 self.update({element.tag: dict(element.items())})
             else:
                 self.update({element.tag: element.text})
-
-
-# USAGE:
-# from xml.etree import cElementTree as ElementTree
-# tree = ElementTree.parse(<path_to_xml_file>)
-# root = tree.getroot()
-# for child in root:
-#     xmldict = XmlDict(child)
-#     versions.append(xmldict)

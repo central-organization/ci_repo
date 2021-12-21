@@ -2,22 +2,15 @@
 name: CI
 
 
-on: 
-  
+on:
   workflow_call:
-    
-  
+
   workflow_dispatch:
 
-
 jobs:
-  
   build:
-    
     runs-on: ubuntu-latest
-
     steps:
-      
       - uses: central-organization/ci_repo/.github/actions/checkout_repo_with_submodules@actions-new
         with:
           repo: central-organization/master_repo

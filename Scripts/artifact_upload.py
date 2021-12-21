@@ -1,8 +1,9 @@
 import argparse
-import sys
 import hashlib
+import sys
 
 from requests_wrapper import requests_session
+
 
 def parse_input_arguments():
     parser = argparse.ArgumentParser(description="Parse diff of integration PR")
@@ -18,14 +19,14 @@ def calculate_sha256(filePath):
     with open(filePath,"rb") as f:
         for byte_block in iter(lambda: f.read(4096),b""):
             hash.update(byte_block)
-      
     return hash.hexdigest()
+
+
 def calculate_sha1(filePath):
     hash = hashlib.sha1()
     with open(filePath,"rb") as f:
         for byte_block in iter(lambda: f.read(4096),b""):
             hash.update(byte_block)
-      
     return hash.hexdigest()
 
 
@@ -42,17 +43,12 @@ def upload(configuration):
             sys.exit(1)
         else :
             print("Checksums equal. Code:",r.status_code)
-    
-        
-    
-    
 
 
 def main(args):
     upload(args)
-    
+
 
 if __name__ == "__main__":
     configuration = parse_input_arguments()
     main(configuration)
-    

@@ -1,11 +1,10 @@
 name: Update submodules
-on: 
-  
+on:
   workflow_call:
-      secrets: 
-        token: 
+      secrets:
+        token:
           required: true
-  
+
   workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -30,14 +29,10 @@ jobs:
           git config --global user.name 'Bot'
           git commit -m "Update submodules"
           git push
-      
-      
       # - name: Push changes
       #   run: |
       #     git add .
       #     git config --global user.name 'Bot'
-          
       #     git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/central-organization/master_repo
       #     git commit -m "Update heads of submodules"
       #     git push
-          
