@@ -1,0 +1,75 @@
+name: Testing workflow
+
+env:
+  GIT_REPO_PATH: ""
+  ARTIFACTORY_UPLOAD_PATH: /home/runner/work/outputs_for_upload
+
+on:
+  workflow_call:
+      secrets:
+        token:
+          required: true
+
+  workflow_dispatch:
+
+jobs:
+  sanity_check:
+    # if: ${{ github.event.label.name == 'integration' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set environment variables
+        run: |
+          echo "GIT_REPO_PATH=$GITHUB_WORKSPACE/master_repo/Provider_submodules/$(cut -d "/" -f2 <<<$GITHUB_REPOSITORY)" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          repository: central-organization/master_repo
+          token: ${{ secrets.SUPER_TOKEN }}
+          path: master_repo
+          submodules: recursive
+
+      # - run: |
+      #     git -C $GITHUB_WORKSPACE/master_repo submodule update --init --remote --recursive
+      #   shell: bash
+
+      - name: Checkout correct branch on PR repo
+        run: |
+          git -C ${{ env.GIT_REPO_PATH }} checkout $GITHUB_HEAD_REF
+
+      - name: check PR content
+        run: |
+          echo ${{ env.GIT_REPO_PATH }}
+          echo $(python $GITHUB_WORKSPACE/master_repo/ci_repo/Tools/validate_pr_package/src/validate_pr_package.py --github_repo_path ${{ env.GIT_REPO_PATH }} --master_repo_path $GITHUB_WORKSPACE/master_repo --artifact_output_path ${{ env.ARTIFACTORY_UPLOAD_PATH }} --artifactory_user tu_central_org --artifactory_pass Ide_gas123)
+
+  stage_1:
+    needs: sanity_check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: set env variables
+        run: echo set env variables
+
+      - name: check python version
+        run: python --version
+
+      - name: install requirements
+        run: echo requirements
+
+      - name: download package archive
+        run: echo download
+
+      - name: unzip package archive
+        run: echo unzip
+
+      - name: run Stage-1 tests
+        run: echo run stage-1
+
+      - name: check if all tests passed
+        run: echo check
+
+      - name: archive and upload logs
+        run: echo logs upload
