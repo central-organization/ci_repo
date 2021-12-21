@@ -21,6 +21,8 @@ def parse_input_arguments():
     parser.add_argument("--github_repo_path", help="", required=True)
     parser.add_argument("--master_repo_path", help="", required=True)
     parser.add_argument("--artifact_output_path", help="", required=True)
+    parser.add_argument("--arty_user", help="", required=True)
+    parser.add_argument("--arty_pass", help="", required=True)
     return parser.parse_args()
 
 
@@ -67,8 +69,8 @@ def get_xml_config_from_diff(github_repo_path):
     return Path(github_repo_path) / xml_config
 
 
-def get_contents_of(artifactory_url):
-    response = requests.get(artifactory_url, auth=('tu_central_org', 'Ide_gas123'))
+def get_contents_of(artifactory_url, username, password):
+    response = requests.get(artifactory_url, auth=(username, password))
     return response
 
 def validate_downloaded_artifact(response, checksum):
@@ -105,7 +107,7 @@ def validate_pr_package(args):
     package_official_path_without_filename = Path(artifactory_paths["official"]) / artifactory_directory_path
     package_official_path = Path(artifactory_paths["official"]) / artifactory_directory_path / artifactory_file_name
 
-    package_unofficial_path_response = get_contents_of(package_unofficial_path)
+    package_unofficial_path_response = get_contents_of(package_unofficial_path, args.arty_user, args.arty_pass)
     if validate_downloaded_artifact(package_unofficial_path_response, artifactory_checksum):
         save_artifact(package_unofficial_path_response, output_path)
     else:
