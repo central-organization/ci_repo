@@ -19,14 +19,16 @@ GIT_DIFF_COMMAND = ["/bin/bash", "-c", "git -C {git_repo_path} diff --name-only 
 def parse_input_arguments():
     parser = argparse.ArgumentParser(description="Parse diff of integration PR")
     parser.add_argument("--github_repo_path", help="", required=True)
-    parser.add_argument("--github_repository", help="", required=True)
+    parser.add_argument("--master_repo_path", help="", required=True)
     parser.add_argument("--artifact_output_path", help="", required=True)
+    parser.add_argument("--arty_user", help="", required=True)
+    parser.add_argument("--arty_pass", help="", required=True)
     return parser.parse_args()
 
 
-def get_provider_paths(repo_name):
-    repo_name = repo_name.split("/")[1]
-    tree = ElementTree.parse('unit_providers.xml')
+def get_provider_paths(github_repo_path, master_repo_path):
+    repo_name = github_repo_path.split("/")[-1]
+    tree = ElementTree.parse(Path(master_repo_path) / 'Provider_submodules' / 'unit_providers.xml')
     root = tree.getroot()
     for child in root:
         for obj in child:
@@ -67,8 +69,8 @@ def get_xml_config_from_diff(github_repo_path):
     return Path(github_repo_path) / xml_config
 
 
-def get_contents_of(artifactory_url):
-    response = requests.get(artifactory_url, auth=('tu_central_org', 'Ide_gas123'))
+def get_contents_of(artifactory_url, username, password):
+    response = requests.get(artifactory_url, auth=(username, password))
     return response
 
 def validate_downloaded_artifact(response, checksum):
@@ -85,14 +87,7 @@ def save_artifact(response, output_path):
         logging.error(f"File could not be saved to: {output_path}")
 
 def validate_pr_package(args):
-    # artifactory_paths = get_artifactory_paths(args.github_repository)
-    # build_logs_tar_gz = "https://centralorg.jfrog.io/artifactory/Output_logs/build_logs_commit_timestamp.tar.gz"
-    # artifactory_paths = {
-    #     "official": "https://centralorg.jfrog.io/artifactory/Official_provider_name/",
-    #     "unofficial": "https://centralorg.jfrog.io/artifactory/Unofficial_provider_name/",
-    # }
-
-    artifactory_paths = get_provider_paths(args.github_repository)
+    artifactory_paths = get_provider_paths(args.github_repo_path, args.master_repo_path)
     xml_config = get_xml_config_from_diff(args.github_repo_path)
     tree = ElementTree.parse(xml_config)
     root = tree.getroot()
@@ -112,7 +107,7 @@ def validate_pr_package(args):
     package_official_path_without_filename = Path(artifactory_paths["official"]) / artifactory_directory_path
     package_official_path = Path(artifactory_paths["official"]) / artifactory_directory_path / artifactory_file_name
 
-    package_unofficial_path_response = get_contents_of(package_unofficial_path)
+    package_unofficial_path_response = get_contents_of(package_unofficial_path, args.arty_user, args.arty_pass)
     if validate_downloaded_artifact(package_unofficial_path_response, artifactory_checksum):
         save_artifact(package_unofficial_path_response, output_path)
     else:
