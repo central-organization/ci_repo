@@ -25,7 +25,7 @@ jobs:
         with:
           fetch-depth: 0
           repository: central-organization/master_repo
-          token: ${{ secrets.SUPER_TOKEN }}
+          token: ${{ secrets.token }}
           path: master_repo
           submodules: recursive
 

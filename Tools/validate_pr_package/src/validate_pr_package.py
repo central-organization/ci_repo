@@ -28,16 +28,19 @@ def get_provider_paths(github_repo_path, master_repo_path):
     repo_name = github_repo_path.split("/")[-1]
     tree = ElementTree.parse(Path(master_repo_path) / 'Provider_submodules' / 'unit_providers.xml')
     root = tree.getroot()
+    xmldict = None
     for child in root:
         for obj in child:
             if obj.tag == 'GitHub_repository_name' and obj.text == repo_name:
                 xmldict = XmlDict(child)
                 break
-    output = {
-        'unofficial': xmldict['Unofficial_Artifactory_repository_path'],
-        'official': xmldict['Official_Artifactory_repository_path']
-    }
-    return output
+    if xmldict:
+        output = {
+            'unofficial': xmldict['Unofficial_Artifactory_repository_path'],
+            'official': xmldict['Official_Artifactory_repository_path']
+        }
+        return output
+    return None
 
 def execute_git_diff_command(git_repo_path):
     cmd = GIT_DIFF_COMMAND
@@ -122,18 +125,21 @@ def validate_pr_package(args):
 
     output_path = Path(args.artifact_output_path) / package_file_name
 
-    package_unofficial_path = artifactory_paths["unofficial"] + package_directory_path + r"/" + package_file_name
-    package_official_path_without_filename = artifactory_paths["official"] + package_directory_path
-    package_official_path = package_official_path_without_filename + r"/" + package_file_name
+    if artifactory_paths:
+        package_unofficial_path = artifactory_paths["unofficial"] + package_directory_path + r"/" + package_file_name
+        package_official_path_without_filename = artifactory_paths["official"] + package_directory_path
+        package_official_path = package_official_path_without_filename + r"/" + package_file_name
 
-    if download_pr_package(package_unofficial_path, package_checksum, args.artifactory_user, args.artifactory_pass, output_path) == False:
-        return 1
+        if download_pr_package(package_unofficial_path, package_checksum, args.artifactory_user, args.artifactory_pass, output_path) == False:
+            return 1
 
-    if validate_official_artifactory_location(package_official_path_without_filename, args.artifactory_user, args.artifactory_pass) == False:
-        return package_official_path
-        # check how to return package_official_path and supply it to other jobs
-    logging.info(f"Validated and downloaded: {package_unofficial_path} to location {output_path}")
-    logging.info(f"Validated existance of directory: {package_official_path_without_filename}")
+        if validate_official_artifactory_location(package_official_path_without_filename, args.artifactory_user, args.artifactory_pass) == False:
+            return package_official_path
+            # check how to return package_official_path and supply it to other jobs
+        logging.info(f"Validated and downloaded: {package_unofficial_path} to location {output_path}")
+        logging.info(f"Validated existance of directory: {package_official_path_without_filename}")
+    else:
+        logging.error("Artifactory paths not parsed correctly.")
     return 0
 
 if __name__ == "__main__":
