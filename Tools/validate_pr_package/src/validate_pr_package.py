@@ -134,7 +134,8 @@ def validate_pr_package(args):
             return 1
 
         if validate_official_artifactory_location(package_official_path_without_filename, args.artifactory_user, args.artifactory_pass) == False:
-            return package_official_path
+            print(f"::set-output name=official_arti_path::{package_official_path}")
+            return 0
             # check how to return package_official_path and supply it to other jobs
         logging.info(f"Validated and downloaded: {package_unofficial_path} to location {output_path}")
         logging.info(f"Validated existance of directory: {package_official_path_without_filename}")
