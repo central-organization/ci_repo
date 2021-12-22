@@ -17,7 +17,8 @@ jobs:
     # if: ${{ github.event.label.name == 'integration' }}
     runs-on: ubuntu-latest
     outputs:
-      official_arti_path: ${{ steps.step_pr_content.outputs.official_arti_path }}
+      unofficial_package_path: ${{ steps.step_pr_content.outputs.unofficial_package_path }}
+      official_package_path: ${{ steps.step_pr_content.outputs.official_package_path }}
     steps:
       - name: Set environment variables
         run: |
@@ -38,7 +39,6 @@ jobs:
       - name: check PR content
         id: step_pr_content
         run: |
-          echo ${{ env.GIT_REPO_PATH }}
           python $GITHUB_WORKSPACE/master_repo/ci_repo/Tools/validate_pr_package/src/validate_pr_package.py --github_repo_path ${{ env.GIT_REPO_PATH }} --master_repo_path $GITHUB_WORKSPACE/master_repo --artifact_output_path ${{ env.ARTIFACTORY_UPLOAD_PATH }} --artifactory_user tu_central_org --artifactory_pass Ide_gas123
 
   stage_1:
@@ -48,12 +48,18 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          repository: central-organization/master_repo
+          token: ${{ secrets.token }}
+          path: master_repo
+          submodules: recursive
 
       - name: set env variables
         run: echo set env variables
 
-      - name: print official_arti_path
-        run: echo ${{needs.sanity_check.outputs.official_arti_path}}
+      - name: print vars
+        run: |
+          echo ${{needs.sanity_check.outputs.unofficial_package_path}}
+          echo ${{needs.sanity_check.outputs.official_package_path}}
 
       - name: check python version
         run: python --version
