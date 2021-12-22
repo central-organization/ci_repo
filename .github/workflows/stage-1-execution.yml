@@ -39,9 +39,7 @@ jobs:
         id: step_pr_content
         run: |
           echo ${{ env.GIT_REPO_PATH }}
-          output=$(python $GITHUB_WORKSPACE/master_repo/ci_repo/Tools/validate_pr_package/src/validate_pr_package.py --github_repo_path ${{ env.GIT_REPO_PATH }} --master_repo_path $GITHUB_WORKSPACE/master_repo --artifact_output_path ${{ env.ARTIFACTORY_UPLOAD_PATH }} --artifactory_user tu_central_org --artifactory_pass Ide_gas123)
-          echo $output
-          echo "::set-output name=official_arti_path::$output"
+          python $GITHUB_WORKSPACE/master_repo/ci_repo/Tools/validate_pr_package/src/validate_pr_package.py --github_repo_path ${{ env.GIT_REPO_PATH }} --master_repo_path $GITHUB_WORKSPACE/master_repo --artifact_output_path ${{ env.ARTIFACTORY_UPLOAD_PATH }} --artifactory_user tu_central_org --artifactory_pass Ide_gas123
 
   stage_1:
     runs-on: ubuntu-latest
