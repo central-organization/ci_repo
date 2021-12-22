@@ -32,6 +32,9 @@ jobs:
           path: master_repo
           submodules: recursive
 
+      - name: mkdir outputs_for_upload
+        run: mkdir -p ${{ env.ARTIFACTORY_UPLOAD_PATH }}
+
       - name: Checkout correct branch on PR repo
         run: |
           git -C ${{ env.GIT_REPO_PATH }} checkout $GITHUB_HEAD_REF

@@ -140,7 +140,6 @@ def validate_pr_package(args):
             store_value_to_workflow_variable("unofficial_package_path", package_unofficial_path)
         else:
             return 1
-        logging.info(f"Validated and downloaded: {package_unofficial_path} to location {output_path}")
 
         if validate_official_artifactory_location(package_official_path_without_filename, args.artifactory_user, args.artifactory_pass):
             logging.info(f"Validated existance of directory: {package_official_path_without_filename}")
