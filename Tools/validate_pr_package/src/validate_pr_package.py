@@ -133,7 +133,7 @@ def validate_pr_package(args):
         if download_pr_package(package_unofficial_path, package_checksum, args.artifactory_user, args.artifactory_pass, output_path) == False:
             return 1
 
-        if validate_official_artifactory_location(package_official_path_without_filename, args.artifactory_user, args.artifactory_pass) == False:
+        if validate_official_artifactory_location(package_official_path_without_filename, args.artifactory_user, args.artifactory_pass) == True:
             print(f"::set-output name=official_arti_path::{package_official_path}")
             return 0
             # check how to return package_official_path and supply it to other jobs
