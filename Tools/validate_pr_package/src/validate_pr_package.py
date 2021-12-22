@@ -12,7 +12,7 @@ from xml_parser import XmlDict
 
 DEFAULT_FILE_ENCODING = "utf-8"
 GIT_DIFF_COMMAND = ["/bin/bash", "-c", "git -C {git_repo_path} diff --name-only origin/master"]
-
+STORE_TO_WORKFLOW_VAR = "::set-output name={var_name}::{var_value}"
 
 def parse_input_arguments():
     parser = argparse.ArgumentParser(description="Parse diff of integration PR, validate and download files")
@@ -102,6 +102,7 @@ def download_pr_package(package_unofficial_path, artifactory_checksum, arti_user
     package_unofficial_path_response = get_contents_of(package_unofficial_path, arti_user, arti_password)
     if validate_downloaded_artifact(package_unofficial_path_response, artifactory_checksum):
         save_artifact(package_unofficial_path_response, output_path)
+        return True
     else:
         logging.error("Checksum is not the same or status code is different than 200")
         return False
@@ -114,6 +115,10 @@ def validate_official_artifactory_location(artifactory_path, arti_user, arti_pas
         return False
     return True
 
+
+def store_value_to_workflow_variable(var_name, var_value):
+    logging.info(f"Setting workflow variable: VAR_NAME={var_name} VAR_VALUE={var_value}")
+    print(STORE_TO_WORKFLOW_VAR.format(var_name=var_name, var_value=var_value))
 
 def validate_pr_package(args):
     artifactory_paths = get_provider_paths(args.github_repo_path, args.master_repo_path)
@@ -130,18 +135,18 @@ def validate_pr_package(args):
         package_official_path_without_filename = artifactory_paths["official"] + package_directory_path
         package_official_path = package_official_path_without_filename + r"/" + package_file_name
 
-        if download_pr_package(package_unofficial_path, package_checksum, args.artifactory_user, args.artifactory_pass, output_path) == False:
+        if download_pr_package(package_unofficial_path, package_checksum, args.artifactory_user, args.artifactory_pass, output_path):
+            logging.info(f"Validated and downloaded: {package_unofficial_path} to location {output_path}")
+            store_value_to_workflow_variable("unofficial_package_path", package_unofficial_path)
+        else:
             return 1
 
-        if validate_official_artifactory_location(package_official_path_without_filename, args.artifactory_user, args.artifactory_pass) == True:
-            print(f"::set-output name=official_arti_path::{package_official_path}")
+        if validate_official_artifactory_location(package_official_path_without_filename, args.artifactory_user, args.artifactory_pass):
+            logging.info(f"Validated existance of directory: {package_official_path_without_filename}")
+            store_value_to_workflow_variable("official_package_path", package_official_path)
             return 0
-            # check how to return package_official_path and supply it to other jobs
-        logging.info(f"Validated and downloaded: {package_unofficial_path} to location {output_path}")
-        logging.info(f"Validated existance of directory: {package_official_path_without_filename}")
-    else:
-        logging.error("Artifactory paths not parsed correctly.")
-    return 0
+    logging.error("Artifactory paths not parsed correctly.")
+    return 1
 
 if __name__ == "__main__":
     logging.basicConfig(
