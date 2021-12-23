@@ -32,6 +32,14 @@ jobs:
           path: master_repo
           submodules: recursive
 
+      - name: run git log on master-repo
+        run: |
+          cd master_repo
+          git log
+
+      - name: sleep for 5 mins
+        run: sleep 5m
+
       - name: mkdir outputs_for_upload
         run: mkdir -p ${{ env.ARTIFACTORY_UPLOAD_PATH }}
 
@@ -55,6 +63,11 @@ jobs:
           token: ${{ secrets.token }}
           path: master_repo
           submodules: recursive
+
+      - name: run git log on master-repo
+        run: |
+          cd master_repo
+          git log
 
       - name: set env variables
         run: echo set env variables
