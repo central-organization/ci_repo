@@ -43,7 +43,7 @@ jobs:
         
       - name: Find all python files and add them to PYTHONPATH
         run: |
-          export PYTHONPATH="$(find $(pwd) -name '*.txt' | tr '\n' ':' | sed 's/.$//')"
+          export PYTHONPATH="$(find $(pwd) -name '*.py' | tr '\n' ':' | sed 's/.$//')"
           python -c "import sys; print(sys.path)"
         
   #    - name: set path
