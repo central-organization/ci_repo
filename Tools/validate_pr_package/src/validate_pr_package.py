@@ -151,3 +151,5 @@ if __name__ == "__main__":
     configuration = parse_input_arguments()
     result = validate_pr_package(configuration)
     sys.exit(result)
+
+    
