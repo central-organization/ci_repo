@@ -38,8 +38,11 @@ jobs:
       - name: install dependencies
         run: pip install pip
         
-      - name: Find all python files
-        run: find $(pwd) -name *.py
+  #    - name: Find all python files
+  #      run: find $(pwd) -name *.py
+        
+      - name: Find all python files and add them to PYTHONPATH
+        run: export PYTHONPATH="$(find $(pwd) -name '*.py' | tr '\n' ':')"
         
   #    - name: set path
   #      run: export PYTHONPATH=${{env.PATH_TO_TESTS}}
