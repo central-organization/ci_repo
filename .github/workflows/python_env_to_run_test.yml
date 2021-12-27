@@ -42,7 +42,9 @@ jobs:
   #      run: find $(pwd) -name *.py
         
       - name: Find all python files and add them to PYTHONPATH
-        run: export PYTHONPATH="$(find $(pwd) -name '*.py' | tr '\n' ':')"
+        run: |
+          export PYTHONPATH="$(find $(pwd) -name '*.py' | tr '\n' ':')"
+          python -c "import sys; print(sys.path)"
         
   #    - name: set path
   #      run: export PYTHONPATH=${{env.PATH_TO_TESTS}}
