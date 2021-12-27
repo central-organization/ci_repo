@@ -50,5 +50,5 @@ jobs:
   #      run: export PYTHONPATH=${{env.PATH_TO_TESTS}}
         # python -c "import sys; print(sys.path)"
 
-   #   - name: Run validate script
-   #     run: python ci_repo/Tools/validate_pr_package/test/test_validate_pr_package.py
+      - name: Run validate script
+        run: python test_validate_pr_package.py
