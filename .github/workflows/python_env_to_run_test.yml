@@ -43,4 +43,4 @@ jobs:
         # python -c "import sys; print(sys.path)"
 
       - name: Run validate script
-        run: python test_validate_pr_package.py
+        run: python /test/test_validate_pr_package.py
