@@ -1,2 +1,1 @@
 # CI_configuration
-test
