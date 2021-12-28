@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from .src.validate_pr_package import *
+from src.validate_pr_package import *
 
 class MockResponse():
 
