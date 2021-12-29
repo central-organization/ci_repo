@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from xml.etree import cElementTree as ElementTree
 
-from src.xml_parser import XmlDict
+from xml_parser import XmlDict
 
 
 DEFAULT_FILE_ENCODING = "utf-8"

@@ -54,3 +54,5 @@ jobs:
         run: |
           cd /home/runner/work/ci_repo/ci_repo/Tools/validate_pr_package/
           python -m test.test_validate_pr_package
+ export PYTHONPATH="$(find $(pwd) -name '*.py' | sed 's![^/]*$!!' | tr '\n' ':' | sed 's/.$//')"
+
